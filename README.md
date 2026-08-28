@@ -56,4 +56,4 @@ Each track folder holds its own short `README.md` describing its scope. Individu
 
 ## Connect
 
-More context on the ideas behind this lab: [Profile README](https://github.com/brunocastrillon).
+More context on the ideas behind this lab: [Profile](https://github.com/brunocastrillon).

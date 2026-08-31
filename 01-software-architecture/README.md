@@ -1,3 +1,5 @@
+🇧🇷 [Ler em português](./README.pt-br.md)
+
 # 01 — Software Architecture
 
 Experiments about how systems are structured internally: where boundaries sit, how modules depend on each other, and what happens when those decisions age.

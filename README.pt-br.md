@@ -1,175 +1,61 @@
 🇺🇸 [Read in English](./README.md)
 
-<img src="./assets/header.svg" alt="Bruno Castrillon — Software Architecture, Distributed Systems, AI Engineering" width="100%" />
+# Laboratório de Engenharia
 
+Uma coleção de experimentos de engenharia pequenos e focados, explorando arquitetura de software, sistemas distribuídos, engenharia de IA, observabilidade, confiabilidade, modos de falha, experimentação quantitativa e fragilidade técnica.
 
-Engenheiro de software com **mais de 15 anos de experiência no ecossistema .NET**, atuando em desenvolvimento de software, arquitetura e sistemas corporativos.
+Isto não é um repositório de tutoriais. Cada experimento parte de uma pergunta de engenharia real, declara uma hipótese, executa um teste controlado pequeno e documenta o que a evidência realmente mostrou — o mesmo princípio por trás do meu [perfil](https://github.com/brunocastrillon):
 
-Ao longo da carreira, trabalhei com software em diferentes domínios e contextos organizacionais, construindo e evoluindo sistemas backend, APIs, integrações e aplicações distribuídas.
+> Evidência > Suposições · Experimentos > Opiniões
 
-Hoje, meu trabalho e minha pesquisa estão cada vez mais na interseção de:
+## Como este laboratório funciona
 
-**Arquitetura de Software · Sistemas Distribuídos · Engenharia de IA · Observabilidade · Engenharia de Resiliência**
+Cada experimento vive na sua própria pasta e segue a mesma estrutura:
 
-Tenho particular interesse em entender como sistemas de software complexos se comportam sob **falha, incerteza e mudança** — e como a arquitetura pode torná-los mais observáveis, resilientes e evolutivos.
-
----
-
-## 🧭 Foco atual
-
-```text
-Engenharia de Software
-│
-├── Arquitetura de Software
-│   ├── Clean Architecture
-│   ├── Domain-Driven Design
-│   ├── Sistemas Distribuídos
-│   └── Event-Driven Architecture
-│
-├── Engenharia de IA
-│   ├── Aplicações com LLM
-│   ├── Retrieval-Augmented Generation
-│   ├── Agentes de IA
-│   └── Machine Learning Aplicado
-│
-├── Engenharia de Plataforma
-│   ├── Containers
-│   ├── Kubernetes
-│   ├── CI/CD
-│   └── Sistemas Cloud-Native
-│
-└── Engenharia de Resiliência
-    ├── Observabilidade
-    ├── Modos de Falha
-    ├── Fragilidade Técnica
-    └── Software Antifrágil
+```
+Pergunta → Hipótese → Experimento → Evidência → Conclusão
 ```
 
-Tecnologia muda; fundamentos de engenharia duram mais. Hoje isso inclui a pós-graduação em **Engenharia de Software na PUC-Rio**.
+- **Pergunta** — o comportamento de engenharia específico sendo investigado
+- **Hipótese** — o que eu espero que aconteça, e por quê
+- **Experimento** — a configuração mínima necessária para testá-la
+- **Evidência** — logs, métricas, traces ou resultados de benchmark
+- **Conclusão** — o que a evidência realmente mostrou, incluindo quando a hipótese estava errada
 
----
+Este repositório começa como um índice de trilhas. Experimentos individuais são adicionados de forma incremental à medida que são construídos.
 
-## 🧠 Filosofia de engenharia
+## Trilhas
 
-> **Sistemas complexos falham de formas complexas.**
+| # | Trilha | Foco |
+|---|-------|-------|
+| 01 | [Arquitetura de Software](./01-software-architecture) | Monólitos modulares, fronteiras, acoplamento, inversão de dependência |
+| 02 | [Sistemas Distribuídos](./02-distributed-systems) | Retries, idempotência, consistência eventual, mensagens duplicadas |
+| 03 | [Engenharia de IA](./03-ai-engineering) | RAG, avaliação, agentes, detecção de alucinação, estratégias de contexto |
+| 04 | [Observabilidade](./04-observability) | Traces, métricas, logs, correlation IDs, OpenTelemetry |
+| 05 | [Confiabilidade](./05-reliability) | Retry/backoff, circuit breakers, degradação graciosa |
+| 06 | [Modos de Falha](./06-failure-modes) | Falha de dependência, injeção de latência, indisponibilidades parciais |
+| 07 | [Experimentação Quantitativa](./07-quantitative-experiments) | Benchmarks, simulações, comparações estatísticas |
+| 08 | [Fragilidade Técnica](./08-technical-fragility) | Risco de dependência, blast radius, SPOFs, pontuação de fragilidade |
 
-Depois de anos construindo software, passei a me interessar cada vez mais não só em **como sistemas são construídos**, mas em **como eles se comportam quando as premissas deixam de ser verdadeiras**.
+A maioria dos experimentos das trilhas 01–07 converge para a trilha 08: fragilidade é o que se encontra depois de estressar a arquitetura de um sistema, seu comportamento distribuído, seus componentes de IA, sua observabilidade, seus mecanismos de confiabilidade e seus modos de falha.
 
-O que acontece quando:
+## Estrutura
 
-- uma dependência fica indisponível?
-- o tráfego aumenta de repente?
-- um deploy falha parcialmente?
-- mensagens chegam atrasadas, duplicadas ou fora de ordem?
-- uma API externa muda?
-- a infraestrutura se degrada?
-- premissas arquiteturais de ontem deixam de valer?
-
-Isso leva a uma pergunta de engenharia que influencia cada vez mais meu trabalho:
-
-> **Onde o sistema é frágil?**
-
-Dívida técnica nos diz algo sobre o estado do código.
-
-**Fragilidade técnica nos diz algo sobre o risco acumulado pelo sistema.**
-
-Acredito que uma boa arquitetura deve ajudar o software a **absorver mudança, expor fraquezas, se recuperar de falhas e evoluir com segurança**.
-
----
-
-## ⚙️ Tecnologia
-
-### Base
-
-`C#` · `.NET` · `ASP.NET Core` · `Python` · `SQL`
-
-### Arquitetura
-
-`Clean Architecture` · `DDD` · `CQRS` · `Event-Driven Architecture` · `Sistemas Distribuídos` · `REST APIs`
-
-### Engenharia de IA
-
-`LLMs` · `RAG` · `Agentes de IA` · `Embeddings` · `Vector Search` · `Prompt Engineering` · `Machine Learning`
-
-### Dados & Mensageria
-
-`PostgreSQL` · `SQL Server` · `SQLite` · `MongoDB` · `RabbitMQ`
-
-### Cloud & Plataforma
-
-`Docker` · `Kubernetes` · `GitHub Actions` · `Azure DevOps`
-
-### Observabilidade
-
-`OpenTelemetry` · `Distributed Tracing` · `Structured Logging` · `Metrics` · `Health Checks`
-
-### Também já explorei
-
-`TypeScript` · `React` · `Solidity` · `Blockchain`
-
----
-
-## 🔬 Engineering Lab
-
-Uso projetos pessoais como **laboratórios de engenharia**.
-
-Em vez de construir projetos só para demonstrar frameworks, eu os uso para investigar questões de engenharia envolvendo:
-
-- arquitetura de software
-- sistemas distribuídos
-- machine learning
-- engenharia de IA
-- observabilidade
-- confiabilidade
-- modos de falha
-- experimentação quantitativa
-- fragilidade técnica
-
-Cada investigação segue a mesma estrutura — pergunta, hipótese, experimento, evidência, conclusão — e vive no [engineering-lab](https://github.com/brunocastrillon/engineering-lab).
-
----
-
-## 🛡️ Resiliência & Software Antifrágil
-
-Uma área que me interessa particularmente é a aplicação de **princípios de resiliência e antifragilidade à engenharia de software**.
-
-A engenharia tradicional costuma perguntar:
-
-> *Como evitamos que esse sistema falhe?*
-
-Tenho interesse em estender essa pergunta:
-
-> *Como projetamos sistemas que expõem fragilidade cedo, aprendem com o estresse e ficam mais fáceis de evoluir?*
-
-Isso envolve explorar conceitos como:
-
-`Observabilidade` · `Isolamento de Falhas` · `Degradação Graciosa` · `Tolerância a Falhas` · `Experimentos Controlados` · `Fragilidade Técnica` · `Evolução sob Incerteza`
-
----
-
-## 📐 Princípios
-
-```text
-Arquitetura        > Frameworks
-Observabilidade    > Achismo
-Evidência          > Suposições
-Experimentos       > Opiniões
-Automação          > Repetição
-Resiliência        > Otimismo
-Simplicidade       > Complexidade Acidental
-Evolução           > Perfeição Prematura
+```
+engineering-lab/
+├── README.md
+├── 01-software-architecture/
+├── 02-distributed-systems/
+├── 03-ai-engineering/
+├── 04-observability/
+├── 05-reliability/
+├── 06-failure-modes/
+├── 07-quantitative-experiments/
+└── 08-technical-fragility/
 ```
 
----
+Cada pasta de trilha tem seu próprio `README.md` curto descrevendo seu escopo. Experimentos individuais são adicionados como subpastas dentro de cada trilha à medida que são construídos.
 
-## 🤝 Vamos conversar
+## Conecte-se
 
-Tenho sempre interesse em trocar ideias sobre:
-
-**Arquitetura de Software · Sistemas Distribuídos · .NET · Engenharia de IA · Observabilidade · Resiliência**
-
-Especialmente quando a conversa começa com:
-
-> **"O que acontece quando essa premissa falha?"**
-
-Fale comigo no [LinkedIn](https://www.linkedin.com/in/brunocastrillon/).
+Mais contexto sobre as ideias por trás deste laboratório: [Perfil](https://github.com/brunocastrillon).

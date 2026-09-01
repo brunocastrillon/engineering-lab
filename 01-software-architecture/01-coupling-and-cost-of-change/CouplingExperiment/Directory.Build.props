@@ -1,0 +1,32 @@
+<Project>
+
+  <!--
+    Shared build settings for both variants.
+
+    Both variants MUST build with identical compiler settings, otherwise a
+    difference in measured ripple would reflect the settings rather than the
+    structure under test.
+  -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <LangVersion>latest</LangVersion>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <IsPackable>false</IsPackable>
+    <!-- Deterministic output keeps incremental-build measurements comparable. -->
+    <Deterministic>true</Deterministic>
+
+    <!--
+      Send every bin/ and obj/ to one artifacts folder outside src/. The harness
+      resets src/ between measurements; keeping build output elsewhere lets the
+      incremental state survive a reset, which is what makes the incremental
+      build timings mean anything.
+    -->
+    <UseArtifactsOutput>true</UseArtifactsOutput>
+    <!-- Overridable, so a container build can keep its output off the host tree. -->
+    <ArtifactsPath Condition="'$(ArtifactsPath)' == ''">$(MSBuildThisFileDirectory)artifacts</ArtifactsPath>
+  </PropertyGroup>
+
+</Project>

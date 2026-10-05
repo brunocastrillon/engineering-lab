@@ -1,0 +1,107 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "C:\\dev\\repos\\engineering-lab\\01-software-architecture\\01-coupling-and-cost-of-change\\CouplingExperiment\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{419D464D-118E-7B40-6169-1B60185FD3C5}|Coupled\\Coupled.csproj|c:\\dev\\repos\\engineering-lab\\01-software-architecture\\01-coupling-and-cost-of-change\\couplingexperiment\\coupled\\commerceapp.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{419D464D-118E-7B40-6169-1B60185FD3C5}|Coupled\\Coupled.csproj|solutionrelative:coupled\\commerceapp.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{419D464D-118E-7B40-6169-1B60185FD3C5}|Coupled\\Coupled.csproj|c:\\dev\\repos\\engineering-lab\\01-software-architecture\\01-coupling-and-cost-of-change\\couplingexperiment\\coupled\\notifications\\notificationservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{419D464D-118E-7B40-6169-1B60185FD3C5}|Coupled\\Coupled.csproj|solutionrelative:coupled\\notifications\\notificationservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{419D464D-118E-7B40-6169-1B60185FD3C5}|Coupled\\Coupled.csproj|c:\\dev\\repos\\engineering-lab\\01-software-architecture\\01-coupling-and-cost-of-change\\couplingexperiment\\coupled\\notifications\\smtptransport.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{419D464D-118E-7B40-6169-1B60185FD3C5}|Coupled\\Coupled.csproj|solutionrelative:coupled\\notifications\\smtptransport.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{419D464D-118E-7B40-6169-1B60185FD3C5}|Coupled\\Coupled.csproj|c:\\dev\\repos\\engineering-lab\\01-software-architecture\\01-coupling-and-cost-of-change\\couplingexperiment\\coupled\\shared\\commercestore.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{419D464D-118E-7B40-6169-1B60185FD3C5}|Coupled\\Coupled.csproj|solutionrelative:coupled\\shared\\commercestore.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{419D464D-118E-7B40-6169-1B60185FD3C5}|Coupled\\Coupled.csproj|c:\\dev\\repos\\engineering-lab\\01-software-architecture\\01-coupling-and-cost-of-change\\couplingexperiment\\coupled\\shared\\seed.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{419D464D-118E-7B40-6169-1B60185FD3C5}|Coupled\\Coupled.csproj|solutionrelative:coupled\\shared\\seed.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 0,
+          "Children": [
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "CommerceApp.cs",
+              "DocumentMoniker": "C:\\dev\\repos\\engineering-lab\\01-software-architecture\\01-coupling-and-cost-of-change\\CouplingExperiment\\Coupled\\CommerceApp.cs",
+              "RelativeDocumentMoniker": "Coupled\\CommerceApp.cs",
+              "ToolTip": "C:\\dev\\repos\\engineering-lab\\01-software-architecture\\01-coupling-and-cost-of-change\\CouplingExperiment\\Coupled\\CommerceApp.cs",
+              "RelativeToolTip": "Coupled\\CommerceApp.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABYAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-08-31T19:17:01.316Z",
+              "IsPinned": true,
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "CommerceStore.cs",
+              "DocumentMoniker": "C:\\dev\\repos\\engineering-lab\\01-software-architecture\\01-coupling-and-cost-of-change\\CouplingExperiment\\Coupled\\Shared\\CommerceStore.cs",
+              "RelativeDocumentMoniker": "Coupled\\Shared\\CommerceStore.cs",
+              "ToolTip": "C:\\dev\\repos\\engineering-lab\\01-software-architecture\\01-coupling-and-cost-of-change\\CouplingExperiment\\Coupled\\Shared\\CommerceStore.cs",
+              "RelativeToolTip": "Coupled\\Shared\\CommerceStore.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABYAAAAFAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-09-01T18:32:17.214Z",
+              "IsPinned": true,
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "NotificationService.cs",
+              "DocumentMoniker": "C:\\dev\\repos\\engineering-lab\\01-software-architecture\\01-coupling-and-cost-of-change\\CouplingExperiment\\Coupled\\Notifications\\NotificationService.cs",
+              "RelativeDocumentMoniker": "Coupled\\Notifications\\NotificationService.cs",
+              "ToolTip": "C:\\dev\\repos\\engineering-lab\\01-software-architecture\\01-coupling-and-cost-of-change\\CouplingExperiment\\Coupled\\Notifications\\NotificationService.cs",
+              "RelativeToolTip": "Coupled\\Notifications\\NotificationService.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAYAAABWAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-09-01T18:52:04.506Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "SmtpTransport.cs",
+              "DocumentMoniker": "C:\\dev\\repos\\engineering-lab\\01-software-architecture\\01-coupling-and-cost-of-change\\CouplingExperiment\\Coupled\\Notifications\\SmtpTransport.cs",
+              "RelativeDocumentMoniker": "Coupled\\Notifications\\SmtpTransport.cs",
+              "ToolTip": "C:\\dev\\repos\\engineering-lab\\01-software-architecture\\01-coupling-and-cost-of-change\\CouplingExperiment\\Coupled\\Notifications\\SmtpTransport.cs",
+              "RelativeToolTip": "Coupled\\Notifications\\SmtpTransport.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABAAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-09-01T18:43:27.311Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 4,
+              "Title": "Seed.cs",
+              "DocumentMoniker": "C:\\dev\\repos\\engineering-lab\\01-software-architecture\\01-coupling-and-cost-of-change\\CouplingExperiment\\Coupled\\Shared\\Seed.cs",
+              "RelativeDocumentMoniker": "Coupled\\Shared\\Seed.cs",
+              "ToolTip": "C:\\dev\\repos\\engineering-lab\\01-software-architecture\\01-coupling-and-cost-of-change\\CouplingExperiment\\Coupled\\Shared\\Seed.cs",
+              "RelativeToolTip": "Coupled\\Shared\\Seed.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAuwAYAAABWAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-09-01T18:35:55.837Z",
+              "EditorCaption": ""
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

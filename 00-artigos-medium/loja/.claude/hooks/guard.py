@@ -5,10 +5,10 @@ import sys
 
 PROTECTED = ("/Migrations/", "appsettings.Production.json", "/.github/workflows/")
 DANGEROUS = [
-    (r"\brm\s+-rf?\b", "rm -rf", "Apague arquivos específicos, um a um."),
+    (r"\brm\s+-rf?\b", "rm -rf", "Para limpar artefatos de build use `dotnet clean`. Para o resto, apague só arquivos específicos."),
     (r"git\s+push\b.*--force", "git push --force", "Use um push normal ou peça ajuda humana."),
     (r"dotnet\s+ef\s+database\s+drop", "ef database drop", "Nunca derrube o banco. Crie uma migration."),
-    (r"(?i)remove-item\b.*-recurse", "Remove-Item -Recurse", "Apague arquivos específicos, um a um."),
+    (r"(?i)remove-item\b.*-recurse", "Remove-Item -Recurse", "Para limpar artefatos de build use `dotnet clean`. Para o resto, apague só arquivos específicos."),
 ]
 
 def block(message: str):

@@ -50,3 +50,80 @@ check("libera dotnet build", r.returncode == 0)
 
 r = run("guard.py", None, raw="isto não é json")
 check("fail-closed com entrada quebrada", r.returncode == 2)
+
+
+# ---- Stop ----
+with tempfile.TemporaryDirectory() as repo:
+    git = lambda *a: subprocess.run(["git", *a], cwd=repo, capture_output=True, check=True)
+    git("init", "-q"); git("config", "user.email", "a@b.c"); git("config", "user.name", "t")
+    
+    Path(repo, "Pedido.cs").write_text("class Pedido {}\n")
+    
+    git("add", "."); git("commit", "-qm", "init")
+    session = f"teste-{uuid.uuid4().hex[:8]}"
+    payload = {"session_id": session, "cwd": repo}
+    
+    # HARNESS_TEST_CMD é dividido por espaços; usamos scripts para evitar aspas.
+    fail_script = Path(repo).parent / f"{session}_fail.py"
+    fail_script.write_text("print('Failed PedidoTests.Total'); raise SystemExit(1)\n")
+    pass_script = Path(repo).parent / f"{session}_pass.py"
+    pass_script.write_text("raise SystemExit(0)\n")
+    FAIL = {"HARNESS_TEST_CMD": f"{sys.executable} {fail_script}"}
+    PASS = {"HARNESS_TEST_CMD": f"{sys.executable} {pass_script}"}
+
+    r = run("verify_done.py", payload, FAIL)
+    check("sem mudança em .cs: não roda testes e libera", r.returncode == 0 and r.stdout == "")
+    Path(repo, "Pedido.cs").write_text("class Pedido { int x; }\n")
+    Path(repo, "Nova").mkdir(); Path(repo, "Nova", "Item.cs").write_text("class Item {}\n")
+    
+    git("checkout", "--", "Pedido.cs")
+    
+    r = run("verify_done.py", payload, FAIL)
+    check("arquivo .cs novo em PASTA NOVA também dispara os testes", "decision" in r.stdout)
+    Path(repo, "Nova", "Item.cs").unlink(); Path(repo, "Nova").rmdir()
+    Path(repo, "Pedido.cs").write_text("class Pedido { int x; }\n")
+    (Path(tempfile.gettempdir()) / f"harness-stop-{session}").unlink(missing_ok=True)
+    
+    r = run("verify_done.py", payload, PASS)
+    check("testes passam: libera", r.returncode == 0 and r.stdout == "")
+    r = run("verify_done.py", payload, FAIL)
+    check("tentativa 1: bloqueia com o motivo", json.loads(r.stdout)["decision"] == "block"
+          and "1/3" in json.loads(r.stdout)["reason"])
+    r = run("verify_done.py", payload, FAIL)
+    check("tentativa 2: bloqueia", json.loads(r.stdout)["decision"] == "block")
+    r = run("verify_done.py", payload, FAIL)
+    check("tentativa 3: desiste e avisa o humano", "systemMessage" in json.loads(r.stdout))
+    fail_script.unlink(); pass_script.unlink()
+
+    # ---- PostToolUse ----
+    r = run("trace.py", {"session_id": session, "cwd": repo, "tool_name": "Edit",
+                         "tool_input": {"file_path": "/proj/Pedido.cs"}})
+    log = Path(repo, ".claude", "logs", "tool-calls.jsonl")
+    check("trace grava uma linha JSON por ação", r.returncode == 0 and json.loads(log.read_text())["tool"] == "Edit")
+
+
+# ---- projeto dentro de um repo maior (ex.: engineering-lab/00-artigos-medium/loja) ----
+with tempfile.TemporaryDirectory() as repo:
+    git = lambda *a: subprocess.run(["git", *a], cwd=repo, capture_output=True, check=True)
+    git("init", "-q"); git("config", "user.email", "a@b.c"); git("config", "user.name", "t")
+    proj = Path(repo, "artigos", "loja"); proj.mkdir(parents=True)
+    other = Path(repo, "outro-projeto"); other.mkdir()
+    (proj / "Pedido.cs").write_text("class Pedido {}\n"); (other / "Outro.cs").write_text("class O {}\n")
+    git("add", "."); git("commit", "-qm", "init")
+    session = f"mono-{uuid.uuid4().hex[:8]}"
+    fail_script = Path(repo).parent / f"{session}_fail.py"
+    fail_script.write_text("raise SystemExit(1)\n")
+    env = {"HARNESS_TEST_CMD": f"{sys.executable} {fail_script}", "CLAUDE_PROJECT_DIR": str(proj)}
+    payload = {"session_id": session, "cwd": repo}          # cwd "errado" de propósito
+    (other / "Outro.cs").write_text("class O { int y; }\n")
+    r = run("verify_done.py", payload, env)
+    check("mudança em OUTRO projeto do repo não dispara os testes da Loja", r.stdout == "" and r.returncode == 0)
+    (proj / "Pedido.cs").write_text("class Pedido { int x; }\n")
+    r = run("verify_done.py", payload, env)
+    check("mudança dentro da Loja dispara (usa CLAUDE_PROJECT_DIR, não o cwd)", "decision" in r.stdout)
+    fail_script.unlink()
+    r = run("trace.py", {"session_id": session, "cwd": repo, "tool_name": "Edit",
+                         "tool_input": {"file_path": "x.cs"}}, {"CLAUDE_PROJECT_DIR": str(proj)})
+    check("trace grava dentro da pasta do projeto", (proj / ".claude" / "logs" / "tool-calls.jsonl").exists())
+
+print("\nTodos os testes dos hooks passaram.")

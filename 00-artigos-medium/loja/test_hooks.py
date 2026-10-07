@@ -113,6 +113,23 @@ with tempfile.TemporaryDirectory() as repo:
           r.returncode == 0 and "decision" in r.stdout)
     bad.unlink()
 
+# ---- saída UTF-8 do teste chega legível, mesmo com locale não-UTF-8 (ex.: cp1252 no Windows) ----
+with tempfile.TemporaryDirectory() as repo:
+    git = lambda *a: subprocess.run(["git", *a], cwd=repo, capture_output=True, check=True)
+    git("init", "-q"); git("config", "user.email", "a@b.c"); git("config", "user.name", "t")
+    Path(repo, "A.cs").write_text("class A {}\n"); git("add", "."); git("commit", "-qm", "init")
+    Path(repo, "A.cs").write_text("class A { int x; }\n")
+    session = f"u8-{uuid.uuid4().hex[:8]}"
+    u8 = Path(repo).parent / f"{session}_u8.py"
+    u8.write_text("import sys\nsys.stdout.buffer.write('Execução de teste → Com falha – 1\\n'.encode('utf-8'))\nraise SystemExit(1)\n",
+                  encoding="utf-8")
+    env = {"HARNESS_TEST_CMD": f"{sys.executable} {u8}", "CLAUDE_PROJECT_DIR": repo,
+           "LC_ALL": "C", "PYTHONUTF8": "0", "PYTHONCOERCECLOCALE": "0"}   # locale não-UTF-8 (emula o Windows)
+    r = run("verify_done.py", {"session_id": session, "cwd": repo}, env)
+    check("saída UTF-8 do dotnet chega legível ao agente (sem 'ExecuÃ§Ã£o')",
+          "Execução de teste → Com falha – 1" in json.loads(r.stdout)["reason"])
+    u8.unlink()
+
 # ---- projeto dentro de um repo maior (ex.: engineering-lab/00-artigos-medium/loja) ----
 with tempfile.TemporaryDirectory() as repo:
     git = lambda *a: subprocess.run(["git", *a], cwd=repo, capture_output=True, check=True)

@@ -6,6 +6,9 @@ import time
 from pathlib import Path
 import sys
 
+# No Windows, stdin/stderr usam a codepage ANSI, mas o Claude Code fala UTF-8.
+sys.stdin.reconfigure(encoding="utf-8")
+
 data = json.load(sys.stdin)
 tool_input = data.get("tool_input", {})
 entry = {

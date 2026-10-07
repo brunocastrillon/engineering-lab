@@ -7,6 +7,9 @@ import sys
 import tempfile
 from pathlib import Path
 
+# No Windows, stdin/stderr usam a codepage ANSI, mas o Claude Code fala UTF-8.
+sys.stdin.reconfigure(encoding="utf-8")
+
 TEST_CMD = os.environ.get("HARNESS_TEST_CMD", "dotnet test --nologo -v q").split()
 MAX_ATTEMPTS = 3
 
@@ -19,14 +22,15 @@ counter = Path(tempfile.gettempdir()) / f"harness-stop-{data.get('session_id', '
 def touched_csharp() -> bool:
     # -uall: lista cada arquivo novo, mesmo dentro de pastas que o git ainda não conhece
     out = subprocess.run(["git", "status", "--porcelain", "-uall", "--", "."],  # "-- ." = só esta pasta
-                         capture_output=True, text=True, cwd=root).stdout
+                         capture_output=True, text=True, errors="replace", cwd=root).stdout
     return any(line.rstrip().rstrip('"').endswith(".cs") for line in out.splitlines())
 
 
 if not touched_csharp():          # só conversou? não gaste tempo rodando testes
     sys.exit(0)
 
-result = subprocess.run(TEST_CMD, capture_output=True, text=True, cwd=root)
+# errors="replace": saída fora do encoding esperado não pode derrubar o portão
+result = subprocess.run(TEST_CMD, capture_output=True, text=True, errors="replace", cwd=root)
 if result.returncode == 0:
     counter.unlink(missing_ok=True)
     sys.exit(0)

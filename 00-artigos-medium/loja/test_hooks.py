@@ -12,13 +12,17 @@ from pathlib import Path
 
 HOOKS = Path(__file__).parent / ".claude" / "hooks"
 
+
 def run(script, payload, env=None, raw=None):
-    stdin = raw if raw is not None else json.dumps(payload)
+    stdin = raw if raw is not None else json.dumps(payload, ensure_ascii=False)
     return subprocess.run([sys.executable, str(HOOKS / script)], input=stdin, text=True,
-                          capture_output=True, env={**os.environ, **(env or {})})
+                          encoding="utf-8", errors="replace", capture_output=True,
+                          env={**os.environ, **(env or {})})
+
 
 def guard(tool, **tool_input):
     return run("guard.py", {"tool_name": tool, "tool_input": tool_input})
+
 
 def check(name, ok):
     print(("OK   " if ok else "FALHOU"), name)
@@ -26,43 +30,39 @@ def check(name, ok):
         sys.exit(1)
 
 
-# --- PreToolUse ----
-r = guard("Edit", file_path="..\\src\\Loja.Infrastructure\\Migrations\\20260101_Init.cs")
+# ---- guard.py (PreToolUse) ----
+r = guard("Edit", file_path="C:\\proj\\src\\Loja.Infrastructure\\Migrations\\20260101_Init.cs")
 check("bloqueia Edit em Migrations (caminho Windows)", r.returncode == 2 and "Migrations" in r.stderr)
-
-r = guard("Write", file_path="../src/Loja.Api/appsettings.Production.json")
+r = guard("Write", file_path="/proj/src/Loja.Api/appsettings.Production.json")
 check("bloqueia Write em appsettings.Production.json", r.returncode == 2)
-
-r = guard("Edit", file_path="../src/Loja.Domain/Pedido.cs")
+r = guard("Edit", file_path="/proj/src/Loja.Domain/Pedido.cs")
 check("libera Edit em arquivo comum", r.returncode == 0)
-
 r = guard("Bash", command="rm -rf bin obj")
 check("bloqueia rm -rf", r.returncode == 2 and "rm -rf" in r.stderr)
-
 r = guard("Bash", command="git push origin main --force")
 check("bloqueia git push --force", r.returncode == 2)
-
 r = guard("PowerShell", command="Remove-Item -Recurse -Force bin")
 check("bloqueia Remove-Item -Recurse (ferramenta PowerShell)", r.returncode == 2)
-
 r = guard("Bash", command="dotnet build")
 check("libera dotnet build", r.returncode == 0)
-
 r = run("guard.py", None, raw="isto não é json")
 check("fail-closed com entrada quebrada", r.returncode == 2)
 
+# ---- encoding: console ANSI do Windows (emulado com PYTHONIOENCODING=cp1252) ----
+WIN = {"PYTHONIOENCODING": "cp1252"}
+r = run("guard.py", {"tool_name": "Write", "tool_input": {"file_path": "C:\\proj\\Migrations\\x.cs"}}, WIN)
+check("mensagem de bloqueio sai em UTF-8, com acentos legíveis", r.returncode == 2 and "é protegido" in r.stderr)
+r = run("guard.py", {"tool_name": "Edit", "tool_input": {"file_path": "C:\\proj\\ÁREA\\Pedido.cs"}}, WIN)
+check("caminho com acento não gera falso bloqueio", r.returncode == 0)
 
-# ---- Stop ----
+# ---- verify_done.py (Stop) ----
 with tempfile.TemporaryDirectory() as repo:
     git = lambda *a: subprocess.run(["git", *a], cwd=repo, capture_output=True, check=True)
     git("init", "-q"); git("config", "user.email", "a@b.c"); git("config", "user.name", "t")
-    
     Path(repo, "Pedido.cs").write_text("class Pedido {}\n")
-    
     git("add", "."); git("commit", "-qm", "init")
     session = f"teste-{uuid.uuid4().hex[:8]}"
     payload = {"session_id": session, "cwd": repo}
-    
     # HARNESS_TEST_CMD é dividido por espaços; usamos scripts para evitar aspas.
     fail_script = Path(repo).parent / f"{session}_fail.py"
     fail_script.write_text("print('Failed PedidoTests.Total'); raise SystemExit(1)\n")
@@ -75,15 +75,12 @@ with tempfile.TemporaryDirectory() as repo:
     check("sem mudança em .cs: não roda testes e libera", r.returncode == 0 and r.stdout == "")
     Path(repo, "Pedido.cs").write_text("class Pedido { int x; }\n")
     Path(repo, "Nova").mkdir(); Path(repo, "Nova", "Item.cs").write_text("class Item {}\n")
-    
     git("checkout", "--", "Pedido.cs")
-    
     r = run("verify_done.py", payload, FAIL)
     check("arquivo .cs novo em PASTA NOVA também dispara os testes", "decision" in r.stdout)
     Path(repo, "Nova", "Item.cs").unlink(); Path(repo, "Nova").rmdir()
     Path(repo, "Pedido.cs").write_text("class Pedido { int x; }\n")
     (Path(tempfile.gettempdir()) / f"harness-stop-{session}").unlink(missing_ok=True)
-    
     r = run("verify_done.py", payload, PASS)
     check("testes passam: libera", r.returncode == 0 and r.stdout == "")
     r = run("verify_done.py", payload, FAIL)
@@ -95,12 +92,26 @@ with tempfile.TemporaryDirectory() as repo:
     check("tentativa 3: desiste e avisa o humano", "systemMessage" in json.loads(r.stdout))
     fail_script.unlink(); pass_script.unlink()
 
-    # ---- PostToolUse ----
+    # ---- trace.py (PostToolUse) ----
     r = run("trace.py", {"session_id": session, "cwd": repo, "tool_name": "Edit",
                          "tool_input": {"file_path": "/proj/Pedido.cs"}})
     log = Path(repo, ".claude", "logs", "tool-calls.jsonl")
     check("trace grava uma linha JSON por ação", r.returncode == 0 and json.loads(log.read_text())["tool"] == "Edit")
 
+# ---- saída de teste fora de UTF-8 não pode derrubar o portão ----
+with tempfile.TemporaryDirectory() as repo:
+    git = lambda *a: subprocess.run(["git", *a], cwd=repo, capture_output=True, check=True)
+    git("init", "-q"); git("config", "user.email", "a@b.c"); git("config", "user.name", "t")
+    Path(repo, "A.cs").write_text("class A {}\n"); git("add", "."); git("commit", "-qm", "init")
+    Path(repo, "A.cs").write_text("class A { int x; }\n")
+    session = f"enc-{uuid.uuid4().hex[:8]}"
+    bad = Path(repo).parent / f"{session}_bad.py"
+    bad.write_text("import sys\nsys.stdout.buffer.write(b'Falhou \\x81\\x8d\\x8f\\x90\\x9d\\n')\nraise SystemExit(1)\n")
+    env = {"HARNESS_TEST_CMD": f"{sys.executable} {bad}", "CLAUDE_PROJECT_DIR": repo}
+    r = run("verify_done.py", {"session_id": session, "cwd": repo}, env)
+    check("saída de teste com bytes inválidos ainda bloqueia (não cai aberto)",
+          r.returncode == 0 and "decision" in r.stdout)
+    bad.unlink()
 
 # ---- projeto dentro de um repo maior (ex.: engineering-lab/00-artigos-medium/loja) ----
 with tempfile.TemporaryDirectory() as repo:

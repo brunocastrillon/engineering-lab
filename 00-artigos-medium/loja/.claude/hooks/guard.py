@@ -1,7 +1,12 @@
+#!/usr/bin/env python3
 """PreToolUse: bloqueia o que o harness não quer deixar o agente executar."""
 import json
 import re
 import sys
+
+# No Windows, stdin/stderr usam a codepage ANSI, mas o Claude Code fala UTF-8.
+sys.stdin.reconfigure(encoding="utf-8")
+sys.stderr.reconfigure(encoding="utf-8")
 
 PROTECTED = ("/Migrations/", "appsettings.Production.json", "/.github/workflows/")
 DANGEROUS = [
@@ -10,6 +15,7 @@ DANGEROUS = [
     (r"dotnet\s+ef\s+database\s+drop", "ef database drop", "Nunca derrube o banco. Crie uma migration."),
     (r"(?i)remove-item\b.*-recurse", "Remove-Item -Recurse", "Para limpar artefatos de build use `dotnet clean`. Para o resto, apague só arquivos específicos."),
 ]
+
 
 def block(message: str):
     print(message, file=sys.stderr)  # o que vai para stderr é o que o agente lê

@@ -1,0 +1,7 @@
+<Solution>
+  <Folder Name="/Coupled/">
+    <Project Path="Coupled/Coupled.csproj" />
+  </Folder>
+  <Folder Name="/Modular/" />
+  <Folder Name="/Parity/" />
+</Solution>

@@ -15,7 +15,8 @@ entry = {
     "ts": time.strftime("%Y-%m-%dT%H:%M:%S"),
     "session": data.get("session_id"),
     "tool": data.get("tool_name"),
-    "target": str(tool_input.get("file_path") or tool_input.get("command") or "")[:200],
+    "target": str(tool_input.get("file_path") or tool_input.get("command")
+                  or tool_input.get("pattern") or tool_input.get("url") or "")[:200],
 }
 root = os.environ.get("CLAUDE_PROJECT_DIR") or data.get("cwd", ".")
 log = Path(root) / ".claude" / "logs" / "tool-calls.jsonl"

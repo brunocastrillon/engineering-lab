@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
-"""Stop: o agente só encerra se os testes passarem (máximo de 3 tentativas)."""
+"""Stop: o agente só encerra se os testes passarem. Recusa até 2 vezes; na 3ª tentativa desiste e avisa o humano."""
 import json
 import locale
 import os
 import subprocess
 import sys
 import tempfile
+import time
 from pathlib import Path
 
 # No Windows, stdin/stderr usam a codepage ANSI, mas o Claude Code fala UTF-8.
@@ -29,6 +30,19 @@ root = os.environ.get("CLAUDE_PROJECT_DIR") or data.get("cwd", ".")
 counter = Path(tempfile.gettempdir()) / f"harness-stop-{data.get('session_id', 'x')}"
 
 
+def registrar(decision: str, **campos):
+    """Anota a decisão em .claude/logs/decisions.jsonl. Falha de log nunca muda a decisão."""
+    try:
+        log = Path(root) / ".claude" / "logs" / "decisions.jsonl"
+        log.parent.mkdir(parents=True, exist_ok=True)
+        entrada = {"ts": time.strftime("%Y-%m-%dT%H:%M:%S"), "session": data.get("session_id"),
+                   "hook": "verify_done", "decision": decision, **campos}
+        with log.open("a", encoding="utf-8") as f:
+            f.write(json.dumps(entrada, ensure_ascii=False) + "\n")
+    except Exception:
+        pass
+
+
 def touched_csharp() -> bool:
     # -uall: lista cada arquivo novo, mesmo dentro de pastas que o git ainda não conhece
     out = subprocess.run(["git", "status", "--porcelain", "-uall", "--", "."],  # "-- ." = só esta pasta
@@ -37,22 +51,28 @@ def touched_csharp() -> bool:
 
 
 if not touched_csharp():          # só conversou? não gaste tempo rodando testes
+    registrar("skip", reason="nenhum .cs alterado")
     sys.exit(0)
 
 # bytes + decode(): saída em encoding inesperado não pode derrubar o portão
+inicio = time.monotonic()
 result = subprocess.run(TEST_CMD, capture_output=True, cwd=root)
+duration_s = round(time.monotonic() - inicio, 1)
 if result.returncode == 0:
     counter.unlink(missing_ok=True)
+    registrar("allow", duration_s=duration_s)
     sys.exit(0)
 
 attempts = int(counter.read_text()) + 1 if counter.exists() else 1
 if attempts >= MAX_ATTEMPTS:      # desiste com transparência: escala para o humano
     counter.unlink(missing_ok=True)
+    registrar("give_up", attempt=attempts, duration_s=duration_s)
     print(json.dumps({"systemMessage":
           f"Harness: os testes continuam falhando após {attempts} tentativas. Revisão humana necessária."}))
     sys.exit(0)
 
 counter.write_text(str(attempts))
+registrar("block", attempt=attempts, duration_s=duration_s)
 tail = "\n".join((decode(result.stdout) + decode(result.stderr)).splitlines()[-40:])
 print(json.dumps({"decision": "block",
                   "reason": f"Os testes falharam (tentativa {attempts}/{MAX_ATTEMPTS}). "

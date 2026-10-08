@@ -2,8 +2,10 @@
 
 Uso:  python test_hooks.py
 """
+import atexit
 import json
 import os
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -11,6 +13,11 @@ import uuid
 from pathlib import Path
 
 HOOKS = Path(__file__).parent / ".claude" / "hooks"
+
+# o guard grava decisions.jsonl; nos testes isso vai para uma pasta temporária, não para o seu .claude/logs
+GUARD_ROOT = tempfile.mkdtemp(prefix="harness-guard-")
+atexit.register(shutil.rmtree, GUARD_ROOT, True)
+G = {"CLAUDE_PROJECT_DIR": GUARD_ROOT}
 
 
 def run(script, payload, env=None, raw=None):
@@ -21,7 +28,7 @@ def run(script, payload, env=None, raw=None):
 
 
 def guard(tool, **tool_input):
-    return run("guard.py", {"tool_name": tool, "tool_input": tool_input})
+    return run("guard.py", {"tool_name": tool, "tool_input": tool_input}, G)
 
 
 def check(name, ok):
@@ -45,15 +52,33 @@ r = guard("PowerShell", command="Remove-Item -Recurse -Force bin")
 check("bloqueia Remove-Item -Recurse (ferramenta PowerShell)", r.returncode == 2)
 r = guard("Bash", command="dotnet build")
 check("libera dotnet build", r.returncode == 0)
-r = run("guard.py", None, raw="isto não é json")
+r = run("guard.py", None, G, raw="isto não é json")
 check("fail-closed com entrada quebrada", r.returncode == 2)
 
 # ---- encoding: console ANSI do Windows (emulado com PYTHONIOENCODING=cp1252) ----
-WIN = {"PYTHONIOENCODING": "cp1252"}
+WIN = {**G, "PYTHONIOENCODING": "cp1252"}
 r = run("guard.py", {"tool_name": "Write", "tool_input": {"file_path": "C:\\proj\\Migrations\\x.cs"}}, WIN)
 check("mensagem de bloqueio sai em UTF-8, com acentos legíveis", r.returncode == 2 and "é protegido" in r.stderr)
 r = run("guard.py", {"tool_name": "Edit", "tool_input": {"file_path": "C:\\proj\\ÁREA\\Pedido.cs"}}, WIN)
 check("caminho com acento não gera falso bloqueio", r.returncode == 0)
+
+# ---- decisions.jsonl do guard: só os bloqueios, nunca as liberações ----
+linhas = [json.loads(l) for l in
+          Path(GUARD_ROOT, ".claude", "logs", "decisions.jsonl").read_text(encoding="utf-8").splitlines()]
+check("guard registra cada bloqueio (7) e só eles",
+      len(linhas) == 7 and all(l["hook"] == "guard" and l["decision"] == "block" for l in linhas))
+check("registro traz a regra violada e o alvo",
+      {l["rule"] for l in linhas} == {"arquivo protegido", "rm -rf", "git push --force",
+                                      "Remove-Item -Recurse", "entrada ilegível"}
+      and any("Migrations" in l.get("target", "") for l in linhas))
+check("liberações não entram no registro", not any("Pedido.cs" in l.get("target", "") for l in linhas))
+
+# falha ao gravar o log nunca muda a decisão ('.claude' é um arquivo, então o mkdir do log falha)
+quebrado = tempfile.mkdtemp(prefix="harness-quebrado-")
+Path(quebrado, ".claude").write_text("x")
+r = run("guard.py", {"tool_name": "Bash", "tool_input": {"command": "rm -rf bin"}}, {"CLAUDE_PROJECT_DIR": quebrado})
+check("erro ao gravar o log não afrouxa o bloqueio do guard", r.returncode == 2)
+shutil.rmtree(quebrado, ignore_errors=True)
 
 # ---- verify_done.py (Stop) ----
 with tempfile.TemporaryDirectory() as repo:
@@ -90,6 +115,12 @@ with tempfile.TemporaryDirectory() as repo:
     check("tentativa 2: bloqueia", json.loads(r.stdout)["decision"] == "block")
     r = run("verify_done.py", payload, FAIL)
     check("tentativa 3: desiste e avisa o humano", "systemMessage" in json.loads(r.stdout))
+    entradas = [json.loads(l) for l in
+                Path(repo, ".claude", "logs", "decisions.jsonl").read_text(encoding="utf-8").splitlines()]
+    check("decisions.jsonl conta a história do portão: skip, block, allow, block, block, give_up",
+          [e["decision"] for e in entradas] == ["skip", "block", "allow", "block", "block", "give_up"]
+          and [e.get("attempt") for e in entradas] == [None, 1, None, 1, 2, 3])
+    check("cada rodada de testes registra a duração", all("duration_s" in e for e in entradas[1:]))
     fail_script.unlink(); pass_script.unlink()
 
     # ---- trace.py (PostToolUse) ----
@@ -97,6 +128,23 @@ with tempfile.TemporaryDirectory() as repo:
                          "tool_input": {"file_path": "/proj/Pedido.cs"}})
     log = Path(repo, ".claude", "logs", "tool-calls.jsonl")
     check("trace grava uma linha JSON por ação", r.returncode == 0 and json.loads(log.read_text())["tool"] == "Edit")
+    run("trace.py", {"session_id": session, "cwd": repo, "tool_name": "Grep", "tool_input": {"pattern": "Total"}})
+    check("trace usa o padrão do Grep como alvo", json.loads(log.read_text().splitlines()[-1])["target"] == "Total")
+
+# ---- falha ao gravar o log não pode afrouxar o portão ----
+with tempfile.TemporaryDirectory() as repo:
+    git = lambda *a: subprocess.run(["git", *a], cwd=repo, capture_output=True, check=True)
+    git("init", "-q"); git("config", "user.email", "a@b.c"); git("config", "user.name", "t")
+    Path(repo, "A.cs").write_text("class A {}\n"); git("add", "."); git("commit", "-qm", "init")
+    Path(repo, "A.cs").write_text("class A { int x; }\n")
+    Path(repo, ".claude").write_text("x")                      # '.claude' como arquivo: o mkdir do log falha
+    session = f"log-{uuid.uuid4().hex[:8]}"
+    fail = Path(repo).parent / f"{session}_fail.py"
+    fail.write_text("raise SystemExit(1)\n")
+    env = {"HARNESS_TEST_CMD": f"{sys.executable} {fail}", "CLAUDE_PROJECT_DIR": repo}
+    r = run("verify_done.py", {"session_id": session, "cwd": repo}, env)
+    check("erro ao gravar o log não afrouxa o portão do Stop", r.returncode == 0 and "decision" in r.stdout)
+    fail.unlink()
 
 # ---- saída de teste fora de UTF-8 não pode derrubar o portão ----
 with tempfile.TemporaryDirectory() as repo:

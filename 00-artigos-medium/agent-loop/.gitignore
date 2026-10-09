@@ -1,0 +1,7 @@
+memory/
+traces/
+__pycache__/
+.pytest_cache/
+
+.env
+.venv

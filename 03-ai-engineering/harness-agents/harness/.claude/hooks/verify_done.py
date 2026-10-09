@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
-"""Stop: o agente só encerra se os testes passarem. Recusa até 2 vezes; na 3ª tentativa desiste e avisa o humano."""
+"""Stop: recusa o encerramento (até 2 vezes) se os testes falharem; na 3ª tentativa libera e avisa o humano.
+
+Por padrão só roda quando algum .cs mudou no git. Com `--always`, roda a cada tentativa de encerrar."""
 import json
 import locale
 import os
@@ -13,7 +15,8 @@ from pathlib import Path
 sys.stdin.reconfigure(encoding="utf-8")
 
 TEST_CMD = os.environ.get("HARNESS_TEST_CMD", "dotnet test --nologo -v q").split()
-MAX_ATTEMPTS = 3
+MAX_REFUSALS = 2                       # recusa 2 vezes; na 3ª tentativa libera
+ALWAYS = "--always" in sys.argv[1:]    # modo que também enxerga vermelho herdado
 
 
 def decode(raw: bytes) -> str:
@@ -50,7 +53,7 @@ def touched_csharp() -> bool:
     return any(line.rstrip().rstrip('"').endswith(".cs") for line in decode(out).splitlines())
 
 
-if not touched_csharp():          # só conversou? não gaste tempo rodando testes
+if not ALWAYS and not touched_csharp():   # só conversou? não gaste tempo rodando testes
     registrar("skip", reason="nenhum .cs alterado")
     sys.exit(0)
 
@@ -64,16 +67,20 @@ if result.returncode == 0:
     sys.exit(0)
 
 attempts = int(counter.read_text()) + 1 if counter.exists() else 1
-if attempts >= MAX_ATTEMPTS:      # desiste com transparência: escala para o humano
+if attempts > MAX_REFUSALS:       # desiste com transparência: libera e escala para o humano
     counter.unlink(missing_ok=True)
     registrar("give_up", attempt=attempts, duration_s=duration_s)
     print(json.dumps({"systemMessage":
-          f"Harness: os testes continuam falhando após {attempts} tentativas. Revisão humana necessária."}))
+          f"Harness: os testes continuam falhando e o agente já foi recusado {MAX_REFUSALS} vezes. "
+          "Encerramento liberado: revisão humana necessária."}))
     sys.exit(0)
 
 counter.write_text(str(attempts))
 registrar("block", attempt=attempts, duration_s=duration_s)
 tail = "\n".join((decode(result.stdout) + decode(result.stderr)).splitlines()[-40:])
-print(json.dumps({"decision": "block",
-                  "reason": f"Os testes falharam (tentativa {attempts}/{MAX_ATTEMPTS}). "
-                            f"Corrija antes de encerrar.\n\n{tail}"}))
+if attempts == MAX_REFUSALS:
+    aviso = (f"Os testes falharam (recusa {attempts} de {MAX_REFUSALS}, a última). Corrija antes de encerrar; "
+             "se não conseguir, explique ao usuário o que falta em vez de insistir.")
+else:
+    aviso = f"Os testes falharam (recusa {attempts} de {MAX_REFUSALS}). Corrija antes de encerrar."
+print(json.dumps({"decision": "block", "reason": f"{aviso}\n\n{tail}"}))

@@ -9,5 +9,5 @@ public class Pedido
 
     public void AdicionarItem(decimal preco) => _itens.Add(preco);
 
-    public decimal Total() => _itens.Sum();
+    public decimal Total() => _itens.Take(_itens.Count - 1).Sum();
 }

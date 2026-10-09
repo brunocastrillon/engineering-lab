@@ -20,9 +20,9 @@ atexit.register(shutil.rmtree, GUARD_ROOT, True)
 G = {"CLAUDE_PROJECT_DIR": GUARD_ROOT}
 
 
-def run(script, payload, env=None, raw=None):
+def run(script, payload, env=None, raw=None, args=()):
     stdin = raw if raw is not None else json.dumps(payload, ensure_ascii=False)
-    return subprocess.run([sys.executable, str(HOOKS / script)], input=stdin, text=True,
+    return subprocess.run([sys.executable, str(HOOKS / script), *args], input=stdin, text=True,
                           encoding="utf-8", errors="replace", capture_output=True,
                           env={**os.environ, **(env or {})})
 
@@ -44,6 +44,13 @@ r = guard("Write", file_path="/proj/src/Loja.Api/appsettings.Production.json")
 check("bloqueia Write em appsettings.Production.json", r.returncode == 2)
 r = guard("Edit", file_path="/proj/src/Loja.Domain/Pedido.cs")
 check("libera Edit em arquivo comum", r.returncode == 0)
+r = guard("Write", file_path="/proj/src/Loja.Api/appsettings.Production.json")
+check("appsettings: a dica fala de revisão humana, não de Migrations",
+      "revisão humana" in r.stderr and "Migrations" not in r.stderr)
+r = guard("Edit", file_path="/proj/src/Loja.Infrastructure/Migrations/Init.cs")
+check("Migrations: a dica manda usar dotnet ef migrations add", "dotnet ef migrations add" in r.stderr)
+r = guard("Write", file_path="/proj/.github/workflows/ci.yml")
+check("workflows: a dica pede descrever a mudança, não aplicá-la", "Workflows de CI" in r.stderr)
 r = guard("Bash", command="rm -rf bin obj")
 check("bloqueia rm -rf", r.returncode == 2 and "rm -rf" in r.stderr)
 r = guard("Bash", command="git push origin main --force")
@@ -65,8 +72,8 @@ check("caminho com acento não gera falso bloqueio", r.returncode == 0)
 # ---- decisions.jsonl do guard: só os bloqueios, nunca as liberações ----
 linhas = [json.loads(l) for l in
           Path(GUARD_ROOT, ".claude", "logs", "decisions.jsonl").read_text(encoding="utf-8").splitlines()]
-check("guard registra cada bloqueio (7) e só eles",
-      len(linhas) == 7 and all(l["hook"] == "guard" and l["decision"] == "block" for l in linhas))
+check("guard registra cada bloqueio (10) e só eles",
+      len(linhas) == 10 and all(l["hook"] == "guard" and l["decision"] == "block" for l in linhas))
 check("registro traz a regra violada e o alvo",
       {l["rule"] for l in linhas} == {"arquivo protegido", "rm -rf", "git push --force",
                                       "Remove-Item -Recurse", "entrada ilegível"}
@@ -110,11 +117,14 @@ with tempfile.TemporaryDirectory() as repo:
     check("testes passam: libera", r.returncode == 0 and r.stdout == "")
     r = run("verify_done.py", payload, FAIL)
     check("tentativa 1: bloqueia com o motivo", json.loads(r.stdout)["decision"] == "block"
-          and "1/3" in json.loads(r.stdout)["reason"])
+          and "recusa 1 de 2" in json.loads(r.stdout)["reason"])
     r = run("verify_done.py", payload, FAIL)
-    check("tentativa 2: bloqueia", json.loads(r.stdout)["decision"] == "block")
+    check("tentativa 2: bloqueia e avisa que é a última recusa",
+          json.loads(r.stdout)["decision"] == "block" and "a última" in json.loads(r.stdout)["reason"]
+          and "explique ao usuário" in json.loads(r.stdout)["reason"])
     r = run("verify_done.py", payload, FAIL)
-    check("tentativa 3: desiste e avisa o humano", "systemMessage" in json.loads(r.stdout))
+    check("tentativa 3: libera e avisa o humano (sem 'decision')", "systemMessage" in json.loads(r.stdout)
+          and "decision" not in json.loads(r.stdout) and "liberado" in json.loads(r.stdout)["systemMessage"])
     entradas = [json.loads(l) for l in
                 Path(repo, ".claude", "logs", "decisions.jsonl").read_text(encoding="utf-8").splitlines()]
     check("decisions.jsonl conta a história do portão: skip, block, allow, block, block, give_up",
@@ -130,6 +140,29 @@ with tempfile.TemporaryDirectory() as repo:
     check("trace grava uma linha JSON por ação", r.returncode == 0 and json.loads(log.read_text())["tool"] == "Edit")
     run("trace.py", {"session_id": session, "cwd": repo, "tool_name": "Grep", "tool_input": {"pattern": "Total"}})
     check("trace usa o padrão do Grep como alvo", json.loads(log.read_text().splitlines()[-1])["target"] == "Total")
+
+# ---- vermelho herdado: o modo padrão não enxerga; --always enxerga ----
+with tempfile.TemporaryDirectory() as repo:
+    git = lambda *a: subprocess.run(["git", *a], cwd=repo, capture_output=True, check=True)
+    git("init", "-q"); git("config", "user.email", "a@b.c"); git("config", "user.name", "t")
+    Path(repo, "A.cs").write_text("class A {}\n"); git("add", "."); git("commit", "-qm", "base vermelha")
+    session = f"red-{uuid.uuid4().hex[:8]}"
+    fail = Path(repo).parent / f"{session}_fail.py"; fail.write_text("raise SystemExit(1)\n")
+    env = {"HARNESS_TEST_CMD": f"{sys.executable} {fail}", "CLAUDE_PROJECT_DIR": repo}
+    payload = {"session_id": session, "cwd": repo}
+    r = run("verify_done.py", payload, env)
+    check("vermelho herdado, modo padrão: nada mudou no git, então o portão não age", r.returncode == 0 and r.stdout == "")
+    r = run("verify_done.py", payload, env, args=["--always"])
+    check("vermelho herdado, --always: o portão enxerga e recusa", json.loads(r.stdout)["decision"] == "block")
+    fail.unlink()
+    ok = Path(repo).parent / f"{session}_ok.py"; ok.write_text("raise SystemExit(0)\n")
+    env["HARNESS_TEST_CMD"] = f"{sys.executable} {ok}"
+    r = run("verify_done.py", payload, env, args=["--always"])
+    check("--always com testes verdes: libera e registra 'allow'", r.returncode == 0 and r.stdout == "")
+    decisoes = [json.loads(l)["decision"] for l in
+                Path(repo, ".claude", "logs", "decisions.jsonl").read_text(encoding="utf-8").splitlines()]
+    check("decisions.jsonl do vermelho herdado: skip, block, allow", decisoes == ["skip", "block", "allow"])
+    ok.unlink()
 
 # ---- falha ao gravar o log não pode afrouxar o portão ----
 with tempfile.TemporaryDirectory() as repo:

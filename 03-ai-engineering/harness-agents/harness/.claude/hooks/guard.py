@@ -11,7 +11,11 @@ from pathlib import Path
 sys.stdin.reconfigure(encoding="utf-8")
 sys.stderr.reconfigure(encoding="utf-8")
 
-PROTECTED = ("/Migrations/", "appsettings.Production.json", "/.github/workflows/")
+PROTECTED = {   # padrão do caminho -> o que o agente deve fazer em vez de escrever
+    "/Migrations/": "Migrations são geradas por `dotnet ef migrations add <Nome>`, nunca editadas à mão.",
+    "appsettings.Production.json": "A configuração de produção exige revisão humana: proponha a mudança ao usuário em vez de aplicá-la.",
+    "/.github/workflows/": "Workflows de CI exigem revisão humana: descreva a mudança desejada em vez de aplicá-la.",
+}
 DANGEROUS = [
     (r"\brm\s+-rf?\b", "rm -rf", "Para limpar artefatos de build use `dotnet clean`. Para o resto, apague só arquivos específicos."),
     (r"git\s+push\b.*--force", "git push --force", "Use um push normal ou peça ajuda humana."),
@@ -53,11 +57,10 @@ tool_input = data.get("tool_input", {})
 
 if tool in ("Edit", "Write"):
     path = tool_input.get("file_path", "").replace("\\", "/")  # Windows manda barra invertida
-    if any(p in path for p in PROTECTED):
-        block(f"Bloqueado: '{path}' é protegido. Migrations são geradas por "
-              "`dotnet ef migrations add <Nome>`, nunca editadas à mão; "
-              "workflows e appsettings de produção exigem revisão humana.",
-              tool=tool, rule="arquivo protegido", target=path)
+    for pattern, hint in PROTECTED.items():
+        if pattern in path:
+            block(f"Bloqueado: '{path}' é protegido. {hint}",
+                  tool=tool, rule="arquivo protegido", target=path)
 
 if tool in ("Bash", "PowerShell"):   # PowerShell: Windows sem Git for Windows
     command = tool_input.get("command", "")

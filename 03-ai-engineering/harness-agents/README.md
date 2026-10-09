@@ -17,7 +17,7 @@ Two small experiments on one question: how much of an AI agent's reliability com
 
 ## Experiment
 
-- **Environment:** Windows (PowerShell), Claude Code, .NET 10 (`net10.0`) with xUnit v3, Python 3.14.5, `anthropic` SDK 1.12.1, model `claude-sonnet-5-5`.
+- **Environment:** Windows (PowerShell), Claude Code with the `superpowers`, .NET 10 (`net10.0`) with xUnit v3, Python 3.14.5, `anthropic` SDK 1.12.1, model `claude-sonnet-5-5`.
 - **`harness/`** — a small layered .NET project with five pieces: `CLAUDE.md`, a path-scoped rule, a skill, an architecture test and three hooks (`guard.py`, `verify_done.py`, `trace.py`). Run `python test_hooks.py` (no model, no tokens) and `dotnet test`. See [`harness/README.md`](./harness/README.md).
 - **`agent-loop/`** — a ~180-line code-maintenance agent: tools, guardrails, stop criteria, independent verification, memory and traces. Run `python simulate_agent.py` (no key) or `python agent.py` (needs an API key). See [`agent-loop/README.md`](./agent-loop/README.md).
 - **Method:** each behavior was exercised with a scenario. Scenarios involving the model were single runs. Hook logic is also covered by 30 tests and the loop by 8 simulated scenarios, none of which call the model.

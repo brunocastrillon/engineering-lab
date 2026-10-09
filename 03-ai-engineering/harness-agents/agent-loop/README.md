@@ -1,4 +1,4 @@
-# Agent loop na prática (parte 4)
+# Agent loop na prática
 
 Código do artigo "Agent loop na prática: construindo um agente de código do zero em Python".
 

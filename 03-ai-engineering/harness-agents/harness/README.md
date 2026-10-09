@@ -21,5 +21,8 @@ Requer Python 3 e git. No `settings.json`, troque `python` por `python3` ou `py`
 
 - Copie `CLAUDE.md`, `docs/` e `.claude/` para a raiz do seu projeto e adapte nomes (`Loja.*`).
 - `ArchitectureTests.cs` assume um projeto xUnit com o pacote `NetArchTest.Rules` e uma classe `Loja.Domain.Pedido`.
-  Ajuste o namespace/tipo para o seu domínio. Este arquivo é ilustrativo e não foi compilado neste pacote.
+  Ajuste o namespace/tipo para o seu domínio. Validado com .NET 10 (`net10.0`) e xUnit v3: o teste passa na base limpa
+  e falha quando o `Domain` passa a depender da `Infrastructure`.
+- Abra o Claude Code **de dentro desta pasta** (`harness/`), onde está o `.claude/`, e aceite a confiança da pasta;
+  abrindo na raiz do repositório, os hooks não são carregados.
 - Comando dos testes usado pelo hook Stop: `dotnet test --nologo -v q` (variável `HARNESS_TEST_CMD` sobrescreve).

@@ -17,7 +17,7 @@ Dois experimentos pequenos sobre uma pergunta: quanto da confiabilidade de um ag
 
 ## Experimento
 
-- **Ambiente:** Windows (PowerShell), Claude Code, .NET 10 (`net10.0`) com xUnit v3, Python 3.14.5, SDK `anthropic` 1.12.1, modelo `claude-sonnet-5-5`.
+- **Ambiente:** Windows (PowerShell), Claude Code with the `superpowers`, .NET 10 (`net10.0`) com xUnit v3, Python 3.14.5, SDK `anthropic` 1.12.1, modelo `claude-sonnet-5-5`.
 - **`harness/`** — um projeto .NET pequeno, em camadas, com cinco peças: `CLAUDE.md`, uma rule por caminho, uma skill, um teste de arquitetura e três hooks (`guard.py`, `verify_done.py`, `trace.py`). Rode `python test_hooks.py` (sem modelo, sem tokens) e `dotnet test`. Veja [`harness/README.md`](./harness/README.md).
 - **`agent-loop/`** — um agente de manutenção de código de ~180 linhas: tools, guardrails, critérios de parada, verificação independente, memória e traces. Rode `python simulate_agent.py` (sem chave) ou `python agent.py` (precisa de chave de API). Veja [`agent-loop/README.md`](./agent-loop/README.md).
 - **Método:** cada comportamento foi exercitado com um cenário. Os cenários com o modelo foram execuções únicas. A lógica dos hooks também é coberta por 30 testes, e o loop por 8 cenários simulados, nenhum deles chama o modelo.

@@ -1,4 +1,4 @@
-# Harness na prática (parte 3)
+# Harness na prática
 
 Código do artigo "Harness na prática: 5 peças que tornam o Claude Code confiável no seu projeto .NET".
 

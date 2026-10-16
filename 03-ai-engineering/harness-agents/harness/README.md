@@ -17,6 +17,12 @@ Código do artigo "Harness na prática: 5 peças que tornam o Claude Code confi�
 
 Requer Python 3 e git. No `settings.json`, troque `python` por `python3` ou `py` se for o caso.
 
+## Modos do gate (`verify_done.py`)
+
+- **Padrão:** roda os testes só se algum `.cs` mudou no git (`git status`, restrito à pasta do projeto). Recusa o encerramento até 2 vezes; na 3ª tentativa libera e avisa o humano.
+- **`--always`:** roda os testes a cada tentativa de encerrar. Enxerga também o **vermelho herdado**: se o último commit já tem teste falhando e o agente não mudou nada, o modo padrão fica em silêncio. Para ativar, acrescente `"--always"` à lista `args` do hook `Stop` no `settings.json`. O custo é rodar a suíte a cada resposta.
+
+
 ## Observações
 
 - Copie `CLAUDE.md`, `docs/` e `.claude/` para a raiz do seu projeto e adapte nomes (`Loja.*`).

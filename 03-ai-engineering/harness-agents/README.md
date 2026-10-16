@@ -17,10 +17,10 @@ Two small experiments on one question: how much of an AI agent's reliability com
 
 ## Experiment
 
-- **Environment:** Windows (PowerShell), Claude Code with the `superpowers`, .NET 10 (`net10.0`) with xUnit v3, Python 3.14.5, `anthropic` SDK 1.12.1, model `claude-sonnet-5-5`.
+- **Environment: Windows (Bash tool, via Git for Windows), Claude Code with the superpowers plugin enabled, .NET 10 (net10.0) with xUnit v3, Python 3.14.5, anthropic SDK 1.12.1, model claude-sonnet-5-5..
 - **`harness/`** — a small layered .NET project with five pieces: `CLAUDE.md`, a path-scoped rule, a skill, an architecture test and three hooks (`guard.py`, `verify_done.py`, `trace.py`). Run `python test_hooks.py` (no model, no tokens) and `dotnet test`. See [`harness/README.md`](./harness/README.md).
 - **`agent-loop/`** — a ~180-line code-maintenance agent: tools, guardrails, stop criteria, independent verification, memory and traces. Run `python simulate_agent.py` (no key) or `python agent.py` (needs an API key). See [`agent-loop/README.md`](./agent-loop/README.md).
-- **Method:** each behavior was exercised with a scenario. Scenarios involving the model were single runs. Hook logic is also covered by 30 tests and the loop by 8 simulated scenarios, none of which call the model.
+- **Method:** each behavior was exercised with a scenario. Scenarios involving the model were single runs. Hook logic is also covered by 37 tests and the loop by 8 simulated scenarios, none of which call the model.
 
 ## Evidence
 
@@ -61,7 +61,7 @@ A real run (`claude-sonnet-5-5`) fixed the bug in 4 model calls and 6 tool calls
 
 - **Held:** mechanical rules held whenever they were exercised (H1). The stop gate and the independent verification caught what the agent could not (H3), and the agent escalated rather than editing the test (H2).
 - **Wrong or partial:** I expected hooks to be the first line of defense. In practice the agent respected visible written policy first, and hooks mattered when the attempt was forced or the policy was not in view. The guard also has a hole the agent never used: shell writes.
-- **Most defects were in the harness itself**, not in the model: encoding, git behavior, tool names. They surfaced only by running on the target OS, which is why the hooks have 30 tests and the loop an 8-scenario simulation.
+- **Most defects were in the harness itself**, not in the model: encoding, git behavior, tool names. They surfaced only by running on the target OS, which is why the hooks have 37 tests and the loop an 8-scenario simulation.
 - **Limits:** single runs, one model, Windows only, token cost not logged. Open questions: record lessons instead of outcomes in episodic memory, retrieve by relevance, cover shell writes, repeat across models and runs.
 
 ## Articles

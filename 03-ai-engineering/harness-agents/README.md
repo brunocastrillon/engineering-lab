@@ -68,8 +68,8 @@ A real run (`claude-sonnet-5-5`) fixed the bug in 4 model calls and 6 tool calls
 
 1. [Harness: why the model is only 20% of your agent's result (PT)](https://medium.com/@brunocastrillon/harness-por-que-o-modelo-%C3%A9-s%C3%B3-20-do-resultado-do-seu-agente-de-ia-74ba75bc2cd8) — theory
 2. [Agents: the difference between a model that answers and a system that acts (PT)](https://medium.com/@brunocastrillon/agents-a-diferen%C3%A7a-entre-um-modelo-que-responde-e-um-sistema-que-age-faef0a9ec427) — theory
-3. Harness in practice: 5 pieces that make Claude Code reliable in your .NET project (PT) — [LINK PART 3]
-4. Agent loop in practice: building a code agent from scratch in Python (PT) — [LINK PART 4]
+3. Harness in practice: 5 pieces that make Claude Code reliable in your .NET project (PT) — [(https://medium.com/@brunocastrillon/harness-na-pr%C3%A1tica-5-pe%C3%A7as-que-tornam-o-claude-code-confi%C3%A1vel-no-seu-projeto-net-2720f796e4de)]
+4. Agent loop in practice: building a code agent from scratch in Python (PT) — [(https://medium.com/@brunocastrillon/agents-na-pr%C3%A1tica-construindo-um-agente-de-c%C3%B3digo-do-zero-em-python-ab78d63b3c0a)]
 
 ---
 ← [03 — AI Engineering](../README.md)
